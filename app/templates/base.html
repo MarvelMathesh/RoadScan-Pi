@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Road Anomaly Detection System — AI-powered road defect detection optimized for Raspberry Pi edge deployment">
+    <title>Road Anomaly Detection — Pi Edge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar" id="main-nav">
+        <div class="nav-brand">
+            <span class="nav-icon"></span>
+            <span class="nav-title">RoadScan<span class="accent">Pi</span></span>
+        </div>
+        <div class="nav-status">
+            <div class="status-pill" id="status-pill">
+                <span class="status-dot"></span>
+                <span class="status-text">System Ready</span>
+            </div>
+            <div class="status-meta">
+                <span class="meta-item" id="mem-usage">RAM: {{ memory_mb }}MB</span>
+                <span class="meta-item" id="backend-info">{{ backend | upper }}</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alerts" id="alerts-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            <span class="alert-icon">
+                                {% if category == 'error' %}!{% elif category == 'success' %}*{% else %}i{% endif %}
+                            </span>
+                            <span class="alert-text">{{ message }}</span>
+                            <button class="alert-dismiss" onclick="this.parentElement.remove()">×</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <span>RoadScan Pi — Edge-Optimized Anomaly Detection</span>
+            <span class="footer-dot">·</span>
+            <span>YOLOv8 @ {{ input_size }}px</span>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

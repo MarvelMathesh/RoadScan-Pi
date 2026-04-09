@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="results-header">
+    <a href="{{ url_for('index') }}" class="back-link" id="back-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>New Analysis</span>
+    </a>
+    <h1 class="results-title">Detection <span class="gradient-text">Results</span></h1>
+</section>
+
+<!-- Stats Bar -->
+<div class="stats-bar" id="stats-bar">
+    <div class="stat-card stat-total">
+        <div class="stat-number">{{ stats.total_detections }}</div>
+        <div class="stat-label">Total Detections</div>
+    </div>
+    <div class="stat-card stat-critical">
+        <div class="stat-number">{{ stats.critical }}</div>
+        <div class="stat-label">Critical</div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-number">{{ stats.warning }}</div>
+        <div class="stat-label">Warning</div>
+    </div>
+    <div class="stat-card stat-info">
+        <div class="stat-number">{{ stats.info }}</div>
+        <div class="stat-label">Info</div>
+    </div>
+</div>
+
+<!-- Image Comparison -->
+<div class="comparison-grid" id="comparison-section">
+    <div class="image-panel">
+        <div class="panel-header">
+            <span class="panel-tag">Original</span>
+            <span class="panel-meta">{{ stats.image_size }}</span>
+        </div>
+        <div class="image-wrapper" id="original-wrapper">
+            <img src="{{ url_for('serve_upload', filename=original) }}"
+                 alt="Original road image" id="original-image" loading="lazy">
+        </div>
+    </div>
+    <div class="image-panel">
+        <div class="panel-header">
+            <span class="panel-tag tag-result">Detected</span>
+            <span class="panel-meta">{{ stats.inference_ms }}ms inference</span>
+        </div>
+        <div class="image-wrapper" id="result-wrapper">
+            <img src="{{ url_for('serve_result', filename=result) }}"
+                 alt="Detection results" id="result-image" loading="lazy">
+        </div>
+    </div>
+</div>
+
+<!-- Detection Details -->
+<div class="detections-section" id="detections-section">
+    <div class="section-header">
+        <h2>Detection Details</h2>
+        <div class="perf-badges">
+            <span class="badge badge-perf">{{ stats.inference_ms }}ms inference</span>
+            <span class="badge badge-perf">{{ stats.total_ms }}ms total</span>
+            <span class="badge badge-perf">{{ stats.memory_mb }}MB RAM</span>
+        </div>
+    </div>
+
+    {% if detections %}
+    <div class="detection-cards" id="detection-list">
+        {% for det in detections %}
+        <div class="detection-card severity-{{ det.severity }}" id="detection-{{ det.id }}">
+            <div class="det-header">
+                <span class="det-id">#{{ det.id }}</span>
+                <span class="det-severity severity-tag-{{ det.severity }}">{{ det.severity | upper }}</span>
+            </div>
+            <div class="det-class">{{ det.class_name }}</div>
+            <div class="det-conf">
+                <div class="conf-bar-track">
+                    <div class="conf-bar-fill severity-fill-{{ det.severity }}"
+                         style="width: {{ det.confidence }}"></div>
+                </div>
+                <span class="conf-value">{{ det.confidence }}</span>
+            </div>
+            <div class="det-bbox">
+                bbox: [{{ det.bbox[0] }}, {{ det.bbox[1] }}, {{ det.bbox[2] }}, {{ det.bbox[3] }}]
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-detections">
+        <span class="no-det-icon"></span>
+        <p>No anomalies detected in this image.</p>
+        <p class="no-det-hint">Try lowering the confidence threshold for more sensitive detection.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Actions -->
+<div class="actions-bar" id="actions-bar">
+    <a href="{{ url_for('index') }}" class="btn-secondary" id="analyze-another">
+        <span>Analyze Another</span>
+    </a>
+    <a href="{{ url_for('serve_result', filename=result) }}" download class="btn-primary" id="download-result">
+        <span>Download Result</span>
+    </a>
+</div>
+{% endblock %}

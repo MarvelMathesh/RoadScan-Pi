@@ -1,0 +1,17 @@
+# Pi-Optimized Road Anomaly Detection — Dependencies
+# Minimal footprint for Raspberry Pi 3B (1GB RAM)
+
+# Core inference (choose ONE runtime for Pi deployment)
+onnxruntime>=1.17.0          # Primary: ~50MB runtime, ARM-optimized
+# ncnn                       # Alternative: even lighter, needs compilation
+
+# Image processing
+opencv-python-headless>=4.8.0  # Headless
+numpy>=1.24.0
+
+# Web server
+flask>=3.0.0
+werkzeug>=3.0.0
+
+# YAML config
+PyYAML>=6.0

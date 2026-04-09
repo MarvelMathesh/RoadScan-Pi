@@ -1,0 +1,9 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+# Export dependencies (run on dev machine, NOT on Pi)
+ultralytics>=8.3.0
+torch
+torchvision
+onnxruntime>=1.17.0
+onnx>=1.15.0
+numpy>=1.24.0
+PyYAML>=6.0

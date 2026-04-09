@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero" id="hero-section">
+    <h1 class="hero-title">Road Anomaly <span class="gradient-text">Detection</span></h1>
+    <p class="hero-subtitle">AI-powered road defect analysis — optimized for edge deployment on Raspberry Pi</p>
+</section>
+
+<!-- Tab Switcher -->
+<div class="tab-container" id="input-tabs">
+    <button class="tab active" data-tab="image" id="tab-image">
+        <span class="tab-icon"></span>
+        <span>Image</span>
+    </button>
+    <button class="tab" data-tab="video" id="tab-video">
+        <span class="tab-icon"></span>
+        <span>Video</span>
+    </button>
+</div>
+
+<!-- Image Upload Panel -->
+<div class="upload-panel active" id="panel-image">
+    <form action="{{ url_for('detect_image') }}" method="POST" enctype="multipart/form-data" id="image-form">
+        <div class="drop-zone" id="image-drop-zone">
+            <div class="drop-zone-content">
+                <div class="drop-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <path d="M21 15l-5-5L5 21"/>
+                    </svg>
+                </div>
+                <p class="drop-text">Drop road image here or <label for="image-file" class="browse-link">browse</label></p>
+                <p class="drop-hint">Supports JPG, PNG, BMP, WebP — Max 50MB</p>
+            </div>
+            <input type="file" name="file" id="image-file" accept=".jpg,.jpeg,.png,.bmp,.webp" required hidden>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-container" id="image-preview-container" style="display:none;">
+            <img id="image-preview" alt="Preview">
+            <button type="button" class="preview-remove" id="image-remove" title="Remove">×</button>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-row">
+            <div class="setting">
+                <label for="image-confidence">Confidence</label>
+                <div class="range-wrap">
+                    <input type="range" name="confidence" id="image-confidence"
+                           min="0.1" max="0.95" step="0.05" value="{{ conf_threshold }}">
+                    <span class="range-value" id="image-conf-value">{{ "%.0f" | format(conf_threshold * 100) }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="image-submit">
+            <span class="btn-icon"></span>
+            <span>Analyze Image</span>
+        </button>
+    </form>
+</div>
+
+<!-- Video Upload Panel -->
+<div class="upload-panel" id="panel-video">
+    <form id="video-form" enctype="multipart/form-data">
+        <div class="drop-zone" id="video-drop-zone">
+            <div class="drop-zone-content">
+                <div class="drop-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="2" y="2" width="20" height="20" rx="2"/>
+                        <polygon points="10,8 16,12 10,16"/>
+                    </svg>
+                </div>
+                <p class="drop-text">Drop video file here or <label for="video-file" class="browse-link">browse</label></p>
+                <p class="drop-hint">Supports MP4, AVI, MOV, MKV — Max 50MB</p>
+            </div>
+            <input type="file" name="file" id="video-file" accept=".mp4,.avi,.mov,.mkv" required hidden>
+        </div>
+
+        <!-- Video preview -->
+        <div class="preview-container" id="video-preview-container" style="display:none;">
+            <video id="video-preview" controls muted></video>
+            <button type="button" class="preview-remove" id="video-remove" title="Remove">×</button>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-row">
+            <div class="setting">
+                <label for="video-confidence">Confidence</label>
+                <div class="range-wrap">
+                    <input type="range" name="confidence" id="video-confidence"
+                           min="0.1" max="0.95" step="0.05" value="{{ conf_threshold }}">
+                    <span class="range-value" id="video-conf-value">{{ "%.0f" | format(conf_threshold * 100) }}%</span>
+                </div>
+            </div>
+            <div class="setting">
+                <label for="frame-skip">Frame Skip</label>
+                <div class="range-wrap">
+                    <input type="range" name="frame_skip" id="frame-skip"
+                           min="1" max="10" step="1" value="3">
+                    <span class="range-value" id="skip-value">3</span>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="video-submit">
+            <span class="btn-icon"></span>
+            <span>Process Video</span>
+        </button>
+    </form>
+
+    <!-- Video Progress -->
+    <div class="progress-container" id="video-progress" style="display:none;">
+        <div class="progress-header">
+            <span class="progress-title">Processing Video</span>
+            <span class="progress-eta" id="progress-eta">Estimating...</span>
+        </div>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-stats">
+            <span id="progress-frames">0 / 0 frames</span>
+            <span id="progress-detections">0 detections</span>
+        </div>
+    </div>
+
+    <!-- Video Result -->
+    <div class="video-result" id="video-result" style="display:none;">
+        <div class="result-success">
+            <span class="result-icon"></span>
+            <span class="result-text">Processing complete!</span>
+        </div>
+        <a href="#" class="btn-primary btn-download" id="video-download">
+            <span class="btn-icon"></span>
+            <span>Download Processed Video</span>
+        </a>
+    </div>
+</div>
+
+<!-- System Info Cards -->
+<div class="info-grid" id="system-info">
+    <div class="info-card">
+        <div class="info-icon"></div>
+        <div class="info-label">Model</div>
+        <div class="info-value">YOLOv8m</div>
+    </div>
+    <div class="info-card">
+        <div class="info-icon"></div>
+        <div class="info-label">Backend</div>
+        <div class="info-value">{{ backend | upper }}</div>
+    </div>
+    <div class="info-card">
+        <div class="info-icon"></div>
+        <div class="info-label">Resolution</div>
+        <div class="info-value">{{ input_size }}×{{ input_size }}</div>
+    </div>
+    <div class="info-card">
+        <div class="info-icon"></div>
+        <div class="info-label">Classes</div>
+        <div class="info-value">7 types</div>
+    </div>
+</div>
+{% endblock %}
